@@ -11,4 +11,5 @@ Keep longer excerpts or personal study notes in `private/` at the repo root, whi
 | Source | Notes |
 |---|---|
 | Geoff Woods, *The AI-Driven Leader* | [ai-driven-leader-woods/](ai-driven-leader-woods/README.md) |
+| Hans Rosling et al., *Factfulness* (2018) | [factfulness-rosling/](factfulness-rosling/README.md) |
 | George Pólya, *How to Solve It* (1945) | See [frameworks/polya-four-steps.md](../frameworks/polya-four-steps.md) |
