@@ -1,0 +1,67 @@
+name: Release
+
+# Every push to main creates a semantic version tag (v1.0.0, v1.1.0, ...) and a
+# GitHub Release. The annotated tag message and the release body hold the same notes.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (auto reads the commits and changed files)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full history and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Work out version and write notes
+        id: plan
+        run: |
+          bash .github/scripts/release.sh "${{ inputs.bump || 'auto' }}" release-notes.md >> "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+      - name: Show release notes
+        if: steps.plan.outputs.skip != 'true'
+        run: |
+          cat release-notes.md
+          cat release-notes.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create annotated tag with the notes
+        if: steps.plan.outputs.skip != 'true'
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          { echo "Release ${TAG}"; echo; cat release-notes.md; } > tag-message.md
+          # verbatim keeps the Markdown "#" headings that git would otherwise strip
+          git tag -a "$TAG" --cleanup=verbatim -F tag-message.md
+          git push origin "refs/tags/${TAG}"
+
+      - name: Create GitHub Release
+        if: steps.plan.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file release-notes.md \
+            --verify-tag \
+            --latest

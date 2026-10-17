@@ -1,0 +1,8 @@
+# Personal study notes and long excerpts from copyrighted sources
+private/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
